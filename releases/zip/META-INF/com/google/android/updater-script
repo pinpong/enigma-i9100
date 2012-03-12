@@ -16,6 +16,6 @@ unmount("/system");
 show_progress(0.100000, 100);
 ui_print(" ");
 ui_print(" ");
-ui_print("   Installation Completed ");
+ui_print("        Installation Completed ");
 ui_print(" Visit our Hompage Team-Blockbuster.com ");
 ui_print(" ");

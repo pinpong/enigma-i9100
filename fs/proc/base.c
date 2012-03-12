@@ -1314,7 +1314,7 @@ static int sched_autogroup_show(struct seq_file *m, void *v)
 
 static ssize_t
 sched_autogroup_write(struct file *file, const char __user *buf,
-	    size_t count, loff_t *offset)
+		size_t count, loff_t *offset)
 {
 	struct inode *inode = file->f_path.dentry->d_inode;
 	struct task_struct *p;
@@ -1360,11 +1360,11 @@ static int sched_autogroup_open(struct inode *inode, struct file *filp)
 }
 
 static const struct file_operations proc_pid_sched_autogroup_operations = {
-	.open		= sched_autogroup_open,
-	.read		= seq_read,
-	.write		= sched_autogroup_write,
-	.llseek		= seq_lseek,
-	.release	= single_release,
+	.open = sched_autogroup_open,
+	.read = seq_read,
+	.write = sched_autogroup_write,
+	.llseek = seq_lseek,
+	.release = single_release,
 };
 
 #endif /* CONFIG_SCHED_AUTOGROUP */
@@ -2624,9 +2624,6 @@ static int do_io_accounting(struct task_struct *task, char *buffer, int whole)
 	struct task_io_accounting acct = task->ioac;
 	unsigned long flags;
 
-	if (!ptrace_may_access(task, PTRACE_MODE_READ))
-		return -EACCES;
-
 	if (whole && lock_task_sighand(task, &flags)) {
 		struct task_struct *t = task;
 
@@ -2752,7 +2749,7 @@ static const struct pid_entry tgid_base_stuff[] = {
 	REG("coredump_filter", S_IRUGO|S_IWUSR, proc_coredump_filter_operations),
 #endif
 #ifdef CONFIG_TASK_IO_ACCOUNTING
-	INF("io",	S_IRUSR, proc_tgid_io_accounting),
+	INF("io",	S_IRUGO, proc_tgid_io_accounting),
 #endif
 };
 
@@ -2983,16 +2980,11 @@ static int proc_pid_fill_cache(struct file *filp, void *dirent, filldir_t filldi
 /* for the /proc/ directory itself, after non-process stuff has been done */
 int proc_pid_readdir(struct file * filp, void * dirent, filldir_t filldir)
 {
-	unsigned int nr;
-	struct task_struct *reaper;
+	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
+	struct task_struct *reaper = get_proc_task(filp->f_path.dentry->d_inode);
 	struct tgid_iter iter;
 	struct pid_namespace *ns;
 
-	if (filp->f_pos >= PID_MAX_LIMIT + TGID_OFFSET)
-		goto out_no_task;
-	nr = filp->f_pos - FIRST_PROCESS_ENTRY;
-
-	reaper = get_proc_task(filp->f_path.dentry->d_inode);
 	if (!reaper)
 		goto out_no_task;
 
@@ -3088,7 +3080,7 @@ static const struct pid_entry tid_base_stuff[] = {
 	REG("make-it-fail", S_IRUGO|S_IWUSR, proc_fault_inject_operations),
 #endif
 #ifdef CONFIG_TASK_IO_ACCOUNTING
-	INF("io",	S_IRUSR, proc_tid_io_accounting),
+	INF("io",	S_IRUGO, proc_tid_io_accounting),
 #endif
 };
 
@@ -3344,3 +3336,4 @@ static const struct file_operations proc_task_operations = {
 	.read		= generic_read_dir,
 	.readdir	= proc_task_readdir,
 };
+

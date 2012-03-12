@@ -69,7 +69,7 @@ static unsigned long down_rate_us;
  * When ramping up frequency with no idle cycles jump to at least this frequency.
  * Zero disables. Set a very high value to jump to policy max freqeuncy.
  */
-#define DEFAULT_UP_MIN_FREQ 1804800
+#define DEFAULT_UP_MIN_FREQ 0
 static unsigned int up_min_freq;
 
 /*
@@ -78,7 +78,7 @@ static unsigned int up_min_freq;
  * to minimize wakeup issues.
  * Set sleep_max_freq=0 to disable this behavior.
  */
-#define DEFAULT_SLEEP_MAX_FREQ 245760
+#define DEFAULT_SLEEP_MAX_FREQ 200000
 static unsigned int sleep_max_freq;
 
 /*
@@ -95,21 +95,21 @@ static unsigned int sample_rate_jiffies;
 static unsigned int ramp_up_step;
 
 /*
- * Max frequency delta when ramping down. zero disables.
+ * Max freqeuncy delta when ramping down. zero disables.
  */
-#define DEFAULT_MAX_RAMP_DOWN 100000
+#define DEFAULT_MAX_RAMP_DOWN 0
 static unsigned int max_ramp_down;
 
 /*
  * CPU freq will be increased if measured load > max_cpu_load;
  */
-#define DEFAULT_MAX_CPU_LOAD 60
+#define DEFAULT_MAX_CPU_LOAD 85
 static unsigned long max_cpu_load;
 
 /*
  * CPU freq will be decreased if measured load < min_cpu_load;
  */
-#define DEFAULT_MIN_CPU_LOAD 30
+#define DEFAULT_MIN_CPU_LOAD 45
 static unsigned long min_cpu_load;
 
 
@@ -122,7 +122,7 @@ static
 struct cpufreq_governor cpufreq_gov_smoothass = {
 	.name = "smoothass",
 	.governor = cpufreq_governor_smoothass,
-	.max_transition_latency = 6000000,
+	.max_transition_latency = 9000000,
 	.owner = THIS_MODULE,
 };
 
@@ -246,7 +246,7 @@ static void cpufreq_smoothass_freq_change_time_work(struct work_struct *work)
 	struct smoothass_info_s *this_smoothass;
 	struct cpufreq_policy *policy;
 	cpumask_t tmp_mask = work_cpumask;
-	for_each_cpu(cpu, tmp_mask) {
+	for_each_cpu(cpu, &tmp_mask) {
 		this_smoothass = &per_cpu(smoothass_info, cpu);
 		policy = this_smoothass->cur_policy;
 
@@ -470,11 +470,6 @@ static int cpufreq_governor_smoothass(struct cpufreq_policy *new_policy,
 	int rc;
 	struct smoothass_info_s *this_smoothass = &per_cpu(smoothass_info, cpu);
 	
-	unsigned int min_freq = ~0;
-	unsigned int max_freq = 0;
-	unsigned int i;
-	struct cpufreq_frequency_table *freq_table;	
-
 	switch (event) {
 	case CPUFREQ_GOV_START:
 		if ((!cpu_online(cpu)) || (!new_policy->cur))
@@ -496,25 +491,9 @@ static int cpufreq_governor_smoothass(struct cpufreq_policy *new_policy,
 		pm_idle_old = pm_idle;
 		pm_idle = cpufreq_idle;
 
+		this_smoothass->freq_table = cpufreq_frequency_get_table(new_policy->cpu);
 		this_smoothass->cur_policy = new_policy;
-		this_smoothass->cur_policy->max = new_policy->max;
-		this_smoothass->cur_policy->min = new_policy->min;
-		this_smoothass->cur_policy->cur = new_policy->cur;
 		this_smoothass->enable = 1;
-				
-		freq_table = cpufreq_frequency_get_table(new_policy->cpu);
-		for (i = 0; (freq_table[i].frequency != CPUFREQ_TABLE_END); i++) {
-			unsigned int freq = freq_table[i].frequency;
-			if (freq == CPUFREQ_ENTRY_INVALID) {
-				continue;
-			}
-			if (freq < min_freq)	
-				min_freq = freq;
-			if (freq > max_freq)
-				max_freq = freq;
-		}
-		sleep_max_freq = min_freq;								//Minimum CPU frequency in table
-		up_min_freq = max_freq;
 
 		// notice no break here!
 
@@ -525,6 +504,7 @@ static int cpufreq_governor_smoothass(struct cpufreq_policy *new_policy,
 		break;
 
 	case CPUFREQ_GOV_STOP:
+		del_timer(&this_smoothass->timer);
 		this_smoothass->enable = 0;
 
 		if (atomic_dec_return(&active_count) > 1)
@@ -533,7 +513,6 @@ static int cpufreq_governor_smoothass(struct cpufreq_policy *new_policy,
 				&smoothass_attr_group);
 
 		pm_idle = pm_idle_old;
-		del_timer(&this_smoothass->timer);
 		break;
 	}
 
@@ -642,3 +621,4 @@ module_exit(cpufreq_smoothass_exit);
 MODULE_AUTHOR ("Erasmux, modified by LeeDrOiD");
 MODULE_DESCRIPTION ("'cpufreq_smoothass' - A smart cpufreq governor");
 MODULE_LICENSE ("GPL");
+

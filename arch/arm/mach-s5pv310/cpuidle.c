@@ -16,10 +16,13 @@
 #include <linux/gpio.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
+#include <linux/notifier.h>
+#include <linux/percpu.h>
 
 #include <asm/proc-fns.h>
 #include <asm/cacheflush.h>
 #include <asm/hardware/cache-l2x0.h>
+#include <asm/idle.h>
 
 #include <plat/pm.h>
 #include <plat/cpu.h>
@@ -35,9 +38,21 @@
 
 #include <mach/ext-gic.h>
 
+static ATOMIC_NOTIFIER_HEAD(idle_notifier);
+
+static void enter_idle(void)
+{
+	atomic_notifier_call_chain(&idle_notifier, IDLE_START, NULL);
+}
+
+static void exit_idle(void)
+{
+	atomic_notifier_call_chain(&idle_notifier, IDLE_END, NULL);
+}
+
 /* enable AFTR/LPA feature */
 static enum { ENABLE_IDLE = 0, ENABLE_AFTR = 1, ENABLE_LPA = 2 } enable_mask =
-    ENABLE_IDLE | ENABLE_LPA;
+    ENABLE_IDLE | ENABLE_AFTR | ENABLE_LPA;
 module_param_named(enable_mask, enable_mask, uint, 0644);
 
 static unsigned long *regs_save;
@@ -552,10 +567,9 @@ static struct sleep_save s5pv310_set_clksrc[] = {
  */
 void s5p_aftr_cache_clean(unsigned long stack_addr)
 {
-	unsigned long tmp;
 
 	/* SVC mode stack area is cleaned from L1 cache */
-	clean_dcache_area(stack_addr, 0x100);
+	clean_dcache_area((void *)stack_addr, 0x100);
 	/* The variable is cleaned from L1 cache */
 	clean_dcache_area(&s3c_sleep_save_phys, 0x4);
 
@@ -771,8 +785,9 @@ static int s5pv310_enter_core0_aftr(struct cpuidle_device *dev,
 	int idle_time;
 	unsigned long tmp;
 
-	pr_info("++%s\n", __func__);
 #ifdef AFTR_DEBUG
+	/* Please shut up */
+	pr_info("++%s\n", __func__);
 	/* ON */
 	gpio_set_value(S5PV310_GPX1(6), 0);
 	gpio_set_value(S5PV310_GPX1(7), 0);
@@ -884,7 +899,10 @@ early_wakeup:
 	idle_time = (after.tv_sec - before.tv_sec) * USEC_PER_SEC +
 		    (after.tv_usec - before.tv_usec);
 
+#ifdef AFTR_DEBUG
+	/* You too, k, thx */
 	pr_info("--%s\n", __func__);
+#endif
 	return idle_time;
 }
 
@@ -1292,6 +1310,7 @@ static int s5pv310_enter_lowpower(struct cpuidle_device *dev,
 				  struct cpuidle_state *state)
 {
 	struct cpuidle_state *new_state = state;
+	int ret;
 
 	/* This mode only can be entered when Core1 is offline */
 	if (cpu_online(1)) {
@@ -1300,17 +1319,20 @@ static int s5pv310_enter_lowpower(struct cpuidle_device *dev,
 	}
 	dev->last_state = new_state;
 
+	enter_idle();
 	if (new_state == &dev->states[0])
-		return s5pv310_enter_idle(dev, new_state);
-
-	if (s5pv310_check_operation())
-		return (enable_mask & ENABLE_AFTR)
+		ret = s5pv310_enter_idle(dev, new_state);
+	else if (s5pv310_check_operation())
+		ret = (enable_mask & ENABLE_AFTR)
 			? s5pv310_enter_core0_aftr(dev, new_state)
 			: s5pv310_enter_idle(dev, new_state);
+	else
+		ret = (enable_mask & ENABLE_LPA)
+			? s5pv310_enter_core0_lpa(dev, new_state)
+			: s5pv310_enter_idle(dev, new_state);
+	exit_idle();
 
-	return (enable_mask & ENABLE_LPA)
-		? s5pv310_enter_core0_lpa(dev, new_state)
-		: s5pv310_enter_idle(dev, new_state);
+	return ret;
 }
 
 static int s5pv310_init_cpuidle(void)

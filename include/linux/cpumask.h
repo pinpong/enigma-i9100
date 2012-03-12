@@ -912,3 +912,4 @@ static inline void __cpus_shift_left(cpumask_t *dstp,
 #endif /* !CONFIG_DISABLE_OBSOLETE_CPUMASK_FUNCTIONS */
 
 #endif /* __LINUX_CPUMASK_H */
+

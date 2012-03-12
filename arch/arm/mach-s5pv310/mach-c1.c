@@ -42,6 +42,7 @@
 #ifdef CONFIG_ANDROID_PMEM
 #include <linux/android_pmem.h>
 #endif
+#include <linux/bootmem.h>
 
 #include <asm/pmu.h>
 #include <asm/mach/arch.h>
@@ -202,6 +203,7 @@ static ssize_t c1_switch_store_vbus(struct device *dev,
 	ret = udc->change_usb_mode(usb_mode);
 	if (ret < 0)
 		pr_err("%s: fail to change mode!!!\n", __func__);
+
 	regulator = regulator_get(NULL, "safeout1");
 	if (IS_ERR(regulator)) {
 		pr_warn("%s: fail to get regulator\n", __func__);
@@ -356,7 +358,7 @@ static struct s3c2410_uartcfg smdkc210_uartcfgs[] __initdata = {
 		.ulcon		= SMDKC210_ULCON_DEFAULT,
 		.ufcon		= SMDKC210_UFCON_DEFAULT,
 		.cfg_gpio	= s3c_setup_uart_cfg_gpio,
-		.wake_peer  = c1_bt_uart_wake_peer,
+		.wake_peer	= c1_bt_uart_wake_peer,
 	},
 	[1] = {
 		.hwport		= 1,
@@ -1982,7 +1984,11 @@ static struct regulator_init_data ldo13_init_data = {
 static struct regulator_init_data ldo17_init_data = {
 	.constraints	= {
 		.name		= "ldo17 range",
+#if defined(CONFIG_MACH_C1_UNDERVOLT)
+		.min_uV		= 2500000,
+#else
 		.min_uV		= 3000000,
+#endif
 		.max_uV		= 3000000,
 		.always_on	= 1,
 		.boot_on	= 1,
@@ -2230,15 +2236,10 @@ REGULATOR_INIT(ldo7, "CAM_ISP_1.8V", 1800000, 1800000, 0,
 		REGULATOR_CHANGE_STATUS, 1);
 REGULATOR_INIT(ldo8, "VUSB_3.3V", 3300000, 3300000, 1,
 		REGULATOR_CHANGE_STATUS, 1);
-#if defined(CONFIG_S5PV310_HI_ARMCLK_THAN_1_2GHZ)
-REGULATOR_INIT(ldo10, "VPLL_1.2V", 1200000, 1200000, 1,
-		REGULATOR_CHANGE_STATUS, 1);
-#else
 REGULATOR_INIT(ldo10, "VPLL_1.1V", 1100000, 1100000, 1,
 		REGULATOR_CHANGE_STATUS, 1);
-#endif
-#if defined(CONFIG_TARGET_LOCALE_NAATT)
-REGULATOR_INIT(ldo11, "TOUCH_2.8V", 3100000, 3100000, 0,
+#if defined(CONFIG_MACH_C1_UNDERVOLT)
+REGULATOR_INIT(ldo11, "TOUCH_2.8V", 2500000, 2500000, 0,
 		REGULATOR_CHANGE_STATUS, 1);
 #else
 REGULATOR_INIT(ldo11, "TOUCH_2.8V", 2800000, 2800000, 0,
@@ -2251,17 +2252,27 @@ REGULATOR_INIT(ldo12, "CAM_SENSOR_CORE_1.2V", 1200000, 1200000, 0,
 REGULATOR_INIT(ldo12, "VT_CAM_1.8V", 1800000, 1800000, 0,
 		REGULATOR_CHANGE_STATUS, 1);
 #endif
-#ifdef CONFIG_FB_S3C_S6E8AA0
-REGULATOR_INIT(ldo13, "VCC_3.0V_LCD", 3300000, 3300000, 1,
-		REGULATOR_CHANGE_STATUS, 0);
+#if defined(CONFIG_MACH_C1_UNDERVOLT)
+REGULATOR_INIT(ldo13, "VCC_3.0V_LCD", 2500000, 2500000, 1,
+		REGULATOR_CHANGE_STATUS, 1);
 #else
 REGULATOR_INIT(ldo13, "VCC_3.0V_LCD", 3000000, 3000000, 1,
 		REGULATOR_CHANGE_STATUS, 1);
 #endif
+#if defined(CONFIG_MACH_C1_UNDERVOLT)
+REGULATOR_INIT(ldo14, "VCC_2.8V_MOTOR", 2500000, 2500000, 0,
+		REGULATOR_CHANGE_STATUS, 1);
+#else
 REGULATOR_INIT(ldo14, "VCC_2.8V_MOTOR", 2800000, 2800000, 0,
 		REGULATOR_CHANGE_STATUS, 1);
+#endif
+#if defined(CONFIG_MACH_C1_UNDERVOLT)
+REGULATOR_INIT(ldo15, "LED_A_2.8V", 2500000, 2500000, 0,
+		REGULATOR_CHANGE_STATUS, 1);
+#else
 REGULATOR_INIT(ldo15, "LED_A_2.8V", 2800000, 2800000, 0,
 		REGULATOR_CHANGE_STATUS, 1);
+#endif
 REGULATOR_INIT(ldo16, "CAM_SENSOR_IO_1.8V", 1800000, 1800000, 0,
 		REGULATOR_CHANGE_STATUS, 1);
 #if defined(CONFIG_MACH_C1_REV02) || defined(CONFIG_MACH_C1Q1_REV02) || defined(CONFIG_MACH_P6_REV02) || defined(CONFIG_MACH_TALBOT_REV02) || defined(CONFIG_TARGET_LOCALE_NA)
@@ -2273,9 +2284,13 @@ REGULATOR_INIT(ldo17_rev04, "VTF_2.8V", 2800000, 2800000, 0,
 REGULATOR_INIT(ldo17, "CAM_AF_2.8V", 2800000, 2800000, 0,
 		REGULATOR_CHANGE_STATUS, 1);
 #endif
+#if defined(CONFIG_MACH_C1_UNDERVOLT)
+REGULATOR_INIT(ldo18, "TOUCH_LED_3.3V", 2500000, 3000000, 0,
+		REGULATOR_CHANGE_STATUS | REGULATOR_CHANGE_VOLTAGE, 1);
+#else
 REGULATOR_INIT(ldo18, "TOUCH_LED_3.3V", 3000000, 3300000, 0,
 		REGULATOR_CHANGE_STATUS | REGULATOR_CHANGE_VOLTAGE, 1);
-
+#endif
 REGULATOR_INIT(ldo21, "VDDQ_M1M2_1.2V", 1200000, 1200000, 1,
 		REGULATOR_CHANGE_STATUS, 1);
 
@@ -2354,8 +2369,8 @@ static struct regulator_init_data buck4_init_data = {
 static struct regulator_init_data buck5_init_data = {
 	.constraints	= {
 		.name		= "VMEM_1.2V",
-		.min_uV		= 1200000,
-		.max_uV		= 1200000,
+ 		.min_uV		= 1200000,
+ 		.max_uV		= 1200000,
 		.apply_uV	= 1,
 		.always_on	= 1,
 		.state_mem	= {
@@ -2632,6 +2647,7 @@ static void max8997_muic_usb_cb(u8 usb_mode)
 		ret = udc->change_usb_mode(USB_CABLE_DETACHED);
 		if (ret < 0)
 			pr_warn("%s: fail to change mode!!!\n", __func__);
+
 		regulator = regulator_get(NULL, "safeout1");
 		if (IS_ERR(regulator)) {
 			pr_err("%s: fail to get regulator\n", __func__);
@@ -2662,12 +2678,12 @@ static void max8997_muic_usb_cb(u8 usb_mode)
 		ret = udc->change_usb_mode(usb_mode);
 		if (ret < 0)
 			pr_err("%s: fail to change mode!!!\n", __func__);
+
 		if (usb_mode == USB_OTGHOST_DETACHED)
 			otg_data->set_pwr_cb(0);
 	}
 }
 
-#ifdef CONFIG_VIDEO_MHL_V1
 extern void MHL_On(bool on);
 static void max8997_muic_mhl_cb(int attached)
 {
@@ -2691,7 +2707,6 @@ static bool max8997_muic_is_mhl_attached(void)
 
 	return !!val;
 }
-#endif
 
 static struct switch_dev switch_dock = {
 	.name = "dock",
@@ -2768,10 +2783,8 @@ static int max8997_muic_host_notify_cb(int enable)
 static struct max8997_muic_data max8997_muic = {
 	.usb_cb = max8997_muic_usb_cb,
 	.charger_cb = max8997_muic_charger_cb,
-#ifdef CONFIG_VIDEO_MHL_V1
 	.mhl_cb = max8997_muic_mhl_cb,
 	.is_mhl_attached = max8997_muic_is_mhl_attached,
-#endif
 #ifdef CONFIG_TARGET_LOCALE_NA
 	.set_safeout = NULL,
 #else
@@ -2945,9 +2958,9 @@ static void mxt224_register_callback(void *function)
 	charging_cbs.tsp_set_charging_cable = function;
 }
 
-static void mxt224_read_ta_status(bool *ta_status)
+static void mxt224_read_ta_status(void *ta_status)
 {
-	*ta_status = is_cable_attached;
+	*((bool*)ta_status) = is_cable_attached;
 }
 
 #if defined(CONFIG_MACH_C1Q1_REV02) || defined(CONFIG_MACH_P6_REV02)
@@ -3047,7 +3060,7 @@ static u8 t8_config[] = {GEN_ACQUISITIONCONFIG_T8,
 static u8 t9_config[] = {TOUCH_MULTITOUCHSCREEN_T9,
 				131, 0, 0, 19, 11, 0, 32, MXT224_THRESHOLD, 2, 1,
 				0,
-				15,		/* MOVHYSTI */
+				0,		/* MOVHYSTI */
 				1, 11, MXT224_MAX_MT_FINGERS, 5, 40, 10, 31, 3,
 				223, 1, 0, 0, 0, 0, 143, 55, 143, 90, 18};
 
@@ -4649,6 +4662,41 @@ static void __init mipi_fb_init(void)
 			dsim_pd->lcd_panel_name);
 }
 #endif
+
+#ifdef CONFIG_ANDROID_RAM_CONSOLE
+static struct resource ram_console_resource[] = {
+	{
+		.flags = IORESOURCE_MEM,
+	}
+};
+
+static struct platform_device ram_console_device = {
+	.name = "ram_console",
+	.id = -1,
+	.num_resources = ARRAY_SIZE(ram_console_resource),
+	.resource = ram_console_resource,
+};
+
+static void __init setup_ram_console_mem(char *str)
+	{
+		unsigned size = memparse(str, &str);
+		if (size && (*str == '@')) {
+			unsigned long long base = 0;
+
+			base = simple_strtoul(++str, &str, 0);
+			if (reserve_bootmem(base, size, BOOTMEM_EXCLUSIVE)) {
+				pr_err("%s: failed reserving size %d at base 0xll%llx\n", __func__, size, base);
+				return;
+			}
+			ram_console_resource[0].start = base;
+			ram_console_resource[0].end = base + size - 1;
+			pr_err("%s: %x at %llx\n", __func__, size, base);
+		}
+	};
+
+__setup("ram_console=", setup_ram_console_mem);
+#endif
+
 #ifdef CONFIG_ANDROID_PMEM
 static struct android_pmem_platform_data pmem_pdata = {
 	.name = "pmem",
@@ -5784,6 +5832,10 @@ static struct platform_device *smdkc210_devices[] __initdata = {
 	&s5p_device_tmu,
 #endif
 
+#ifdef CONFIG_ANDROID_RAM_CONSOLE
+    &ram_console_device,
+#endif
+
 #if defined(CONFIG_WIMAX_CMC) && defined(CONFIG_TARGET_LOCALE_NA)
 	&s3c_device_cmc732,
 #endif
@@ -5839,6 +5891,13 @@ static void __init smdkc210_map_io(void)
 	s5pv310_reserve();
 #elif defined(CONFIG_S5P_MEM_BOOTMEM)
 	s5p_reserve_bootmem();
+#endif
+#ifdef CONFIG_ANDROID_RAM_CONSOLE
+	if (!reserve_bootmem(0x5e900000, (1 << CONFIG_LOG_BUF_SHIFT), BOOTMEM_EXCLUSIVE)) {
+		ram_console_resource[0].start = 0x5e900000;
+		ram_console_resource[0].end = ram_console_resource[0].start + (1 << CONFIG_LOG_BUF_SHIFT) - 1;
+		pr_err("%s ram_console_resource[0].start:i%x, end:%x\n", __func__, ram_console_resource[0].start, ram_console_resource[0].end);
+	}
 #endif
 	sec_getlog_supply_meminfo(meminfo.bank[0].size, meminfo.bank[0].start,
 				  meminfo.bank[1].size, meminfo.bank[1].start);
@@ -5931,7 +5990,7 @@ static void c1_reboot(char str, const char *cmd)
 		else if (!strcmp(cmd, "recovery"))
 			writel(REBOOT_PREFIX | REBOOT_MODE_RECOVERY,
 			       S5P_INFORM3);
-		else if (!strcmp(cmd, "download"))
+		else if (!strcmp(cmd, "download") || !strcmp(cmd, "bootloader"))
 			writel(REBOOT_PREFIX | REBOOT_MODE_DOWNLOAD,
 			       S5P_INFORM3);
 		else if (!strcmp(cmd, "upload"))

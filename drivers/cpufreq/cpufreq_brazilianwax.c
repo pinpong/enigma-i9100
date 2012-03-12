@@ -86,7 +86,7 @@ static unsigned long down_rate_us;
  * When ramping up frequency with no idle cycles jump to at least this frequency.
  * Zero disables. Set a very high value to jump to policy max freqeuncy.
  */
-#define DEFAULT_UP_MIN_FREQ 1900000
+#define DEFAULT_UP_MIN_FREQ 2000000
 static unsigned int up_min_freq;
 
 /*
@@ -95,17 +95,17 @@ static unsigned int up_min_freq;
  * to minimize wakeup issues.
  * Set sleep_max_freq=0 to disable this behavior.
  */
-#define DEFAULT_SLEEP_MAX_FREQ 245760
+#define DEFAULT_SLEEP_MAX_FREQ 400000
 static unsigned int sleep_max_freq;
 
 /*
  * The frequency to set when waking up from sleep.
  * When sleep_max_freq=0 this will have no effect.
  */
-#define DEFAULT_SLEEP_WAKEUP_FREQ 998400
+#define DEFAULT_SLEEP_WAKEUP_FREQ 800000
 static unsigned int sleep_wakeup_freq;
 
-#define UP_THRESHOLD_FREQ 1800000
+#define UP_THRESHOLD_FREQ 2000000
 static unsigned int threshold_freq;
 
 /*
@@ -113,7 +113,7 @@ static unsigned int threshold_freq;
  * go below this frequency.
  * Set awake_min_freq=0 to disable this behavior.
  */
-#define DEFAULT_AWAKE_MIN_FREQ 122000
+#define DEFAULT_AWAKE_MIN_FREQ 200000
 static unsigned int awake_min_freq;
 
 static unsigned int suspendfreq = 400000;
@@ -128,31 +128,31 @@ static unsigned int sample_rate_jiffies;
  * Minimum Freqeuncy delta when ramping up.
  * zero disables and causes to always jump straight to max frequency.
  */
-#define DEFAULT_RAMP_UP_STEP 50000
+#define DEFAULT_RAMP_UP_STEP 600000
 static unsigned int ramp_up_step;
 
 /*
  * Miminum Freqeuncy delta when ramping down.
  * zero disables and will calculate ramp down according to load heuristic.
  */
-#define DEFAULT_RAMP_DOWN_STEP 50000
+#define DEFAULT_RAMP_DOWN_STEP 400000
 static unsigned int ramp_down_step;
 
 /*
  * CPU freq will be increased if measured load > max_cpu_load;
  */
-#define DEFAULT_MAX_CPU_LOAD 65
+#define DEFAULT_MAX_CPU_LOAD 45
 static unsigned long max_cpu_load;
 
-#define DEFAULT_X_CPU_LOAD 80
+#define DEFAULT_X_CPU_LOAD 70
 static unsigned long x_cpu_load;
 
 /*
  * CPU freq will be decreased if measured load < min_cpu_load;
  */
-#define DEFAULT_MIN_CPU_LOAD 35
+#define DEFAULT_MIN_CPU_LOAD 25
 static unsigned long min_cpu_load;
-#define RAPID_MIN_CPU_LOAD 10
+#define RAPID_MIN_CPU_LOAD 5
 static unsigned long rapid_min_cpu_load;
 
 
@@ -318,7 +318,7 @@ static void cpufreq_brazilianwax_freq_change_time_work(struct work_struct *work)
         struct cpufreq_policy *policy;
         unsigned int relation = CPUFREQ_RELATION_L;
         cpumask_t tmp_mask = work_cpumask;
-        for_each_cpu(cpu, tmp_mask) {
+        for_each_cpu(cpu, &tmp_mask) {
                 this_brazilianwax = &per_cpu(brazilianwax_info, cpu);
                 policy = this_brazilianwax->cur_policy;
                 cpu_load = this_brazilianwax->cur_cpu_load;
@@ -693,10 +693,6 @@ static int cpufreq_governor_brazilianwax(struct cpufreq_policy *new_policy,
                 unsigned int event)
 {
         unsigned int cpu = new_policy->cpu;
-		unsigned int min_freq = ~0;
-		unsigned int max_freq = 0;
-		unsigned int i;
-		struct cpufreq_frequency_table *freq_table;
         int rc;
         struct brazilianwax_info_s *this_brazilianwax = &per_cpu(brazilianwax_info, cpu);
 
@@ -719,24 +715,6 @@ static int cpufreq_governor_brazilianwax(struct cpufreq_policy *new_policy,
 
                 this_brazilianwax->cur_policy = new_policy;
                 this_brazilianwax->enable = 1;
-
-				freq_table = cpufreq_frequency_get_table(new_policy->cpu);
-				for (i = 0; (freq_table[i].frequency != CPUFREQ_TABLE_END); i++) {
-					unsigned int freq = freq_table[i].frequency;
-					if (freq == CPUFREQ_ENTRY_INVALID) {
-						continue;
-					}
-					if (freq < min_freq)	
-						min_freq = freq;
-					if (freq > max_freq)
-						max_freq = freq;
-				}
-				sleep_max_freq = min_freq;								//Minimum CPU frequency in table
-				sleep_wakeup_freq = freq_table[(i-1)/2].frequency > min_freq ? freq_table[(i-1)/2].frequency : max_freq;		//Value in midrange of available CPU frequencies if sufficient number of freq bins available
-				threshold_freq = i > 0 ? freq_table[i-1].frequency : max_freq;
-				up_min_freq = max_freq;
-				awake_min_freq = min_freq;
-				suspendfreq = freq_table[(i-1)/2].frequency > min_freq ? freq_table[(i-1)/2].frequency : max_freq;		//Value in midrange of available CPU frequencies if sufficient number of freq bins available
 
 		// imoseyon - should only register for suspend when governor active
         	register_early_suspend(&brazilianwax_power_suspend); 
@@ -844,3 +822,4 @@ module_exit(cpufreq_brazilianwax_exit);
 MODULE_AUTHOR ("Erasmux/imoseyon");
 MODULE_DESCRIPTION ("'cpufreq_brazilianwax' - A smart cpufreq governor optimized for the hero!");
 MODULE_LICENSE ("GPL");
+

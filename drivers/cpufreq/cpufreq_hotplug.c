@@ -705,7 +705,7 @@ static int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 					   &dbs_attr_group);
 		kfree(dbs_tuners_ins.hotplug_load_history);
 		/*
-		 * XXX BIG CAVEAT: Stopping the governor with CPU1 offline
+		 *  BIG CAVEAT: Stopping the governor with CPU1 offline
 		 * will result in it remaining offline until the user onlines
 		 * it again.  It is up to the user to do this (for now).
 		 */

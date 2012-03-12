@@ -189,7 +189,7 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
 # Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
 export KBUILD_BUILDHOST := $(SUBARCH)
 ARCH		?= arm
-CROSS_COMPILE	?= /home/pinpong/android/toolchains/gcc-linaro-arm-linux-gnueabi-2012.01-20120125_linux/bin/arm-linux-gnueabi-
+CROSS_COMPILE	?= /home/pinpong/android/toolchains/gcc-linaro-arm-linux-gnueabi-2012.02-20120222_linux/bin/arm-linux-gnueabi-
 CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
 
 # Architecture as present in compile.h
@@ -340,7 +340,7 @@ CFLAGS_KERNEL	=
 AFLAGS_KERNEL	=
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage 
 
-ENIGMA_FLAGS    = -marm -march=armv7-a -mfloat-abi=hard -pipe -03 \
+ENIGMA_FLAGS    = -marm -march=armv7-a -mfloat-abi=hard -pipe \
                   -mfpu=vfp3 -Wno-array-bounds -fsched-spec-load
 
 
