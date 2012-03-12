@@ -1,0 +1,100 @@
+# On branch master
+# Changes to be committed:
+#   (use "git reset HEAD <file>..." to unstage)
+#
+#	new file:   include/linux/gp2a.h
+#	new file:   include/linux/i2c/input.h
+#
+# Changes not staged for commit:
+#   (use "git add/rm <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+#
+#	modified:   Makefile
+#	modified:   arch/arm/configs/enigma-defconfig
+#	modified:   arch/arm/mach-s5pv310/Kconfig
+#	modified:   arch/arm/mach-s5pv310/c1.h
+#	modified:   arch/arm/mach-s5pv310/cpu.c
+#	modified:   arch/arm/mach-s5pv310/cpu_ppmu.c
+#	modified:   arch/arm/mach-s5pv310/cpufreq.c
+#	modified:   arch/arm/mach-s5pv310/cpuidle.c
+#	modified:   arch/arm/mach-s5pv310/include/mach/cpufreq.h
+#	modified:   arch/arm/mach-s5pv310/mach-c1-gps.c
+#	modified:   arch/arm/mach-s5pv310/mach-c1.c
+#	modified:   arch/arm/mach-s5pv310/pm-hotplug.c
+#	modified:   arch/arm/mach-s5pv310/setup-fimc0.c
+#	modified:   arch/arm/mach-s5pv310/tmu.c
+#	modified:   block/sio-iosched.c
+#	modified:   build.sh
+#	modified:   drivers/cpufreq/Kconfig
+#	modified:   drivers/cpufreq/Makefile
+#	modified:   drivers/cpufreq/cpufreq.c
+#	modified:   drivers/cpufreq/cpufreq_brazilianwax.c
+#	modified:   drivers/cpufreq/cpufreq_conservative.c
+#	modified:   drivers/cpufreq/cpufreq_hotplug.c
+#	modified:   drivers/cpufreq/cpufreq_interactive.c
+#	modified:   drivers/cpufreq/cpufreq_interactivex.c
+#	modified:   drivers/cpufreq/cpufreq_lagfree.c
+#	modified:   drivers/cpufreq/cpufreq_lulzactive.c
+#	modified:   drivers/cpufreq/cpufreq_ondemand.c
+#	modified:   drivers/cpufreq/cpufreq_performance.c
+#	modified:   drivers/cpufreq/cpufreq_savagedzen.c
+#	modified:   drivers/cpufreq/cpufreq_smartass.c
+#	modified:   drivers/cpufreq/cpufreq_smoothass.c
+#	modified:   drivers/cpufreq/cpufreq_stats.c
+#	modified:   drivers/input/keyboard/cypress/cypress-touchkey.c
+#	modified:   drivers/input/keyboard/cypress/issp_main.c
+#	modified:   drivers/input/keyboard/cypress/issp_routines.c
+#	modified:   drivers/power/Makefile
+#	modified:   drivers/power/max17042-fuelgauge.c
+#	modified:   drivers/power/max8922-charger.c
+#	modified:   drivers/power/sec_battery.c
+#	modified:   fs/jfs/jfs_dtree.h
+#	modified:   fs/proc/base.c
+#	modified:   include/linux/cpufreq.h
+#	modified:   include/linux/cpumask.h
+#	modified:   include/linux/rcupdate.h
+#	modified:   include/linux/sched.h
+#	modified:   include/linux/slab.h
+#	modified:   init/Kconfig
+#	modified:   kernel/fork.c
+#	modified:   kernel/sched.c
+#	modified:   kernel/sched_debug.c
+#	modified:   kernel/sys.c
+#	modified:   kernel/sysctl.c
+#	modified:   lib/Kconfig.debug
+#	modified:   mm/Makefile
+#	deleted:    releases/tar/.gitignore
+#	deleted:    releases/tar/.tar
+#	modified:   releases/zip/META-INF/com/google/android/updater-script
+#	deleted:    releases/zip/enigma.zip
+#	deleted:    releases/zip/zImage
+#	modified:   sound/soc/codecs/Makefile
+#	modified:   sound/soc/codecs/ak4642.c
+#	modified:   sound/soc/codecs/mc1n2/mc1n2.c
+#	modified:   sound/soc/codecs/mc1n2/mcresctrl.c
+#	modified:   sound/soc/codecs/wm8900.c
+#	modified:   sound/soc/codecs/wm8904.c
+#	modified:   sound/soc/codecs/wm8955.c
+#	modified:   sound/soc/codecs/wm8961.c
+#	modified:   sound/soc/codecs/wm8990.c
+#	modified:   sound/soc/codecs/wm8994.c
+#	modified:   sound/soc/codecs/wm_hubs.c
+#
+# Untracked files:
+#   (use "git add <file>..." to include in what will be committed)
+#
+#	include/linux/i2c/mxt540e.h
+#	include/linux/leds-max8997.h
+#	include/linux/lps331ap.h
+#	include/linux/max8903_charger.h
+#	include/linux/power/
+#	include/linux/rcu_types.h
+#	include/linux/s6e63m0.h
+#	include/linux/slqb_def.h
+#	include/linux/stmpe-keypad.h
+#	include/media/sr130pc10_platform.h
+#	kernel/sched_autogroup.c
+#	kernel/sched_autogroup.h
+#	log.txt
+#	mm/slqb.c
+#	sound/soc/codecs/mc1n2/mc1n2_cfg_q1.h
